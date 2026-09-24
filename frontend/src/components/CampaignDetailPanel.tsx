@@ -1,6 +1,6 @@
 
 
-import { FormEvent, useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { FormEvent, useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { MousePointer2, Download, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Campaign, AppConfig } from '../types/campaign';
@@ -88,6 +88,8 @@ export function CampaignDetailPanel({
   const [refundContributor, setRefundContributor] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pledgeError, setPledgeError] = useState<string | null>(null);
+  const [pledgeSuccess, setPledgeSuccess] = useState(false);
+  const pledgeSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bannerImageError, setBannerImageError] = useState(false);
   const walletReady = appConfig?.walletIntegrationReady ?? false;
   const { downloadPng, toDataUrl } = useCampaignShareCard();
@@ -112,6 +114,14 @@ export function CampaignDetailPanel({
   useEffect(() => {
     setBannerImageError(false);
   }, [campaign?.id, connectedWallet]);
+
+  useEffect(() => {
+    return () => {
+      if (pledgeSuccessTimerRef.current !== null) {
+        clearTimeout(pledgeSuccessTimerRef.current);
+      }
+    };
+  }, []);
 
 
 
@@ -178,11 +188,21 @@ export function CampaignDetailPanel({
 
   async function submitPledge() {
     setPledgeError(null);
+    setPledgeSuccess(false);
+    if (pledgeSuccessTimerRef.current !== null) {
+      clearTimeout(pledgeSuccessTimerRef.current);
+      pledgeSuccessTimerRef.current = null;
+    }
     setIsSubmitting(true);
     try {
       await onPledge(activeCampaign.id, Number(pledgeAmount), selectedToken);
       setPledgeAmount('25');
       setPledgeToken('');
+      setPledgeSuccess(true);
+      pledgeSuccessTimerRef.current = setTimeout(() => {
+        setPledgeSuccess(false);
+        pledgeSuccessTimerRef.current = null;
+      }, 4000);
     } catch (error) {
       setPledgeError(describePledgeError(error));
     } finally {
@@ -343,7 +363,7 @@ export function CampaignDetailPanel({
         </p>
       ) : null}
 
-      <form className="form-grid" onSubmit={handlePledge}>
+      <form className="form-grid" onSubmit={handlePledge} aria-busy={isSubmitting || isPledgePending}>
         <label className="field-group">
           <span>Connected contributor</span>
           <input
@@ -357,7 +377,7 @@ export function CampaignDetailPanel({
         {activeCampaign.acceptedTokens?.length > 1 && (
           <label className="field-group">
             <span>Token</span>
-            <select value={selectedToken} onChange={(e) => setPledgeToken(e.target.value)} required>
+            <select value={selectedToken} onChange={(e) => setPledgeToken(e.target.value)} required disabled={isSubmitting || isPledgePending}>
               {activeCampaign.acceptedTokens.map((token) => (
                 <option key={token} value={token}>
                   {token}
@@ -376,6 +396,7 @@ export function CampaignDetailPanel({
             value={pledgeAmount}
             onChange={(event) => setPledgeAmount(event.target.value)}
             required
+            disabled={isSubmitting || isPledgePending}
           />
         </label>
 
@@ -390,7 +411,7 @@ export function CampaignDetailPanel({
               !connectedWallet
             }
           >
-            {isPledgePending ? 'Submitting...' : 'Add pledge'}
+            {isSubmitting || isPledgePending ? 'Submitting...' : 'Add pledge'}
           </button>
 
           <button
@@ -425,6 +446,24 @@ export function CampaignDetailPanel({
               Retry
             </button>
           </div>
+        ) : null}
+
+        {pledgeSuccess ? (
+          <p className="form-success" role="status">
+            Pledge submitted successfully.
+          </p>
+        ) : null}
+
+        {!activeCampaign.progress.canPledge && !isSubmitting && !isPledgePending ? (
+          <p className="muted" style={{ fontSize: '0.875rem', marginTop: 4 }}>
+            {activeCampaign.progress.status === 'funded'
+              ? 'This campaign has reached its goal and is no longer accepting pledges.'
+              : activeCampaign.progress.status === 'claimed'
+                ? 'The creator has already claimed this campaign.'
+                : activeCampaign.progress.status === 'failed'
+                  ? 'This campaign did not reach its goal before the deadline.'
+                  : 'Pledging is not available for this campaign.'}
+          </p>
         ) : null}
       </form>
 
