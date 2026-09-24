@@ -2313,11 +2313,14 @@ tbody tr:hover td {
   .wizard-stepper ol {
     flex-wrap: nowrap;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     padding-bottom: 4px;
   }
 
   .wizard-step-button {
     white-space: nowrap;
+    min-height: 44px;
   }
 
   .wizard-nav {
@@ -2331,5 +2334,16 @@ tbody tr:hover td {
 
   .review-block dl {
     grid-template-columns: 1fr;
+  }
+
+  /* Reduce the gap on the two-column optional-fields row so stacked
+     fields don't have excessive vertical space on narrow screens */
+  .wizard-step-panel .row {
+    gap: 16px;
+  }
+
+  /* Prevent the wizard card from causing horizontal page overflow */
+  .wizard-card {
+    overflow: hidden;
   }
 }

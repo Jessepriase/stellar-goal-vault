@@ -436,6 +436,8 @@ export function CreateCampaignForm({
                 <span>Image URL (optional)</span>
                 <input
                   type="url"
+                  inputMode="url"
+                  autoComplete="url"
                   value={values.imageUrl}
                   onChange={(event) => update('imageUrl', event.target.value)}
                   placeholder="https://example.com/image.png"
@@ -446,6 +448,8 @@ export function CreateCampaignForm({
                 <span>External Link (optional)</span>
                 <input
                   type="url"
+                  inputMode="url"
+                  autoComplete="url"
                   value={values.externalLink}
                   onChange={(event) => update('externalLink', event.target.value)}
                   placeholder="https://example.com/project"
@@ -481,6 +485,7 @@ export function CreateCampaignForm({
               <span>Target amount (cumulative sum of units)</span>
               <input
                 type="number"
+                inputMode="decimal"
                 min="0.01"
                 step="0.01"
                 value={values.targetAmount}
@@ -498,6 +503,7 @@ export function CreateCampaignForm({
               <span>Deadline in hours</span>
               <input
                 type="number"
+                inputMode="decimal"
                 min="0.0001"
                 step="0.0001"
                 value={values.deadlineHours}
@@ -515,6 +521,7 @@ export function CreateCampaignForm({
               <span>Max per contributor (optional)</span>
               <input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 step="1"
                 value={values.maxPerContributor}
@@ -583,6 +590,7 @@ export function CreateCampaignForm({
                         <span>Minimum pledge amount</span>
                         <input
                           type="number"
+                          inputMode="decimal"
                           min="0.01"
                           step="0.01"
                           value={tier.minAmount}
